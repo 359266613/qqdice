@@ -6,6 +6,7 @@ QQ 9.2.75 骰子与猜拳插件，当前处于发送链路诊断阶段。
 
 - 已停止构建旧悬浮球入口及全局 JSON 改写 Hook；旧源码仍保留，方便对照。
 - 根据 QQ 9.2.75 的 `QQMsgService.h`，监听 `sendAniStickerMsg:faceContent:additionalMsg:callBack:` 和 `sendMarketFaceMsg:marketFaceInfo:additionalMsg:callBack:`。
+- 同时检查三个 `QQMsgService` 消息元素发送接口，仅记录其中的表情元素，不读取普通文本。
 - 这两个方法是候选路径，尚未证实普通聊天里的骰子和猜拳会经过它们。
 - Hook 保留 QQ 原发送行为，不修改消息，也不会弹出选择界面。
 - 暂未实现指定点数或猜拳结果。classdump 没有提供具体表情标识、结果编码或方法实现，必须先通过真实设备确认。

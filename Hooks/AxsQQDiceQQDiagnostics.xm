@@ -5,6 +5,9 @@
 @interface QQMsgService : NSObject
 - (void)sendAniStickerMsg:(id)contact faceContent:(id)content additionalMsg:(id)additional callBack:(id)callback;
 - (void)sendMarketFaceMsg:(id)contact marketFaceInfo:(id)info additionalMsg:(id)additional callBack:(id)callback;
+- (void)sendMsgWithOCContactAndOCMsgElements:(id)contact msgElems:(id)elements msgAttributeInfos:(id)attributes callBack:(id)callback;
+- (void)sendMsgWithOCContact:(id)contact msgElems:(id)elements msgAttributeInfos:(id)attributes callBack:(id)callback;
+- (unsigned long long)sendMsgAndGetMsgIDWithOCContactAndOCMsgElements:(id)contact msgElems:(id)elements msgAttributeInfos:(id)attributes callBack:(id)callback;
 @end
 
 static void axs_qqdice_log(NSString *message) {
@@ -62,10 +65,21 @@ static void axs_qqdice_logSticker(id object, NSString *source) {
     }
     NSMutableDictionary *fields = [NSMutableDictionary dictionary];
     for (NSString *name in @[@"packId", @"stickerId", @"resultId", @"surpriseId",
-                              @"faceName", @"emojiId", @"magicFaceContent"]) {
+                              @"faceName", @"emojiId", @"magicFaceContent",
+                              @"sourceType", @"stickerType", @"randomType"]) {
         id value = axs_qqdice_readObject(object, NSSelectorFromString(name));
         if ([value isKindOfClass:[NSString class]] || [value isKindOfClass:[NSNumber class]]) {
             fields[name] = value;
+        }
+    }
+    if ([NSStringFromClass([object class]) isEqualToString:@"OCFaceElement"]) {
+        for (NSString *name in @[@"faceIndex", @"faceType"]) {
+            SEL selector = NSSelectorFromString(name);
+            NSMethodSignature *signature = [object methodSignatureForSelector:selector];
+            if (signature && signature.numberOfArguments == 2 &&
+                (signature.methodReturnType[0] == 'I' || signature.methodReturnType[0] == 'i')) {
+                fields[name] = @(((unsigned int (*)(id, SEL))objc_msgSend)(object, selector));
+            }
         }
     }
     axs_qqdice_log([NSString stringWithFormat:@"%@ class=%@ fields=%@", source, NSStringFromClass([object class]), fields]);
@@ -82,6 +96,25 @@ static void axs_qqdice_logSticker(id object, NSString *source) {
     }
 }
 
+static void axs_qqdice_logElements(id elements, NSString *source) {
+    if (![elements isKindOfClass:[NSArray class]]) {
+        return;
+    }
+    for (id element in (NSArray *)elements) {
+        if (![NSStringFromClass([element class]) isEqualToString:@"OCMsgElement"]) {
+            continue;
+        }
+        id face = axs_qqdice_readObject(element, @selector(faceElement));
+        id market = axs_qqdice_readObject(element, @selector(marketFaceElement));
+        if (face) {
+            axs_qqdice_logSticker(face, [source stringByAppendingString:@".faceElement"]);
+        }
+        if (market) {
+            axs_qqdice_logSticker(market, [source stringByAppendingString:@".marketFaceElement"]);
+        }
+    }
+}
+
 %hook QQMsgService
 
 - (void)sendAniStickerMsg:(id)contact faceContent:(id)content additionalMsg:(id)additional callBack:(id)callback {
@@ -92,6 +125,21 @@ static void axs_qqdice_logSticker(id object, NSString *source) {
 - (void)sendMarketFaceMsg:(id)contact marketFaceInfo:(id)info additionalMsg:(id)additional callBack:(id)callback {
     axs_qqdice_logSticker(info, @"sendMarketFaceMsg");
     %orig;
+}
+
+- (void)sendMsgWithOCContactAndOCMsgElements:(id)contact msgElems:(id)elements msgAttributeInfos:(id)attributes callBack:(id)callback {
+    axs_qqdice_logElements(elements, @"sendMsgWithOCContactAndOCMsgElements");
+    %orig;
+}
+
+- (void)sendMsgWithOCContact:(id)contact msgElems:(id)elements msgAttributeInfos:(id)attributes callBack:(id)callback {
+    axs_qqdice_logElements(elements, @"sendMsgWithOCContact");
+    %orig;
+}
+
+- (unsigned long long)sendMsgAndGetMsgIDWithOCContactAndOCMsgElements:(id)contact msgElems:(id)elements msgAttributeInfos:(id)attributes callBack:(id)callback {
+    axs_qqdice_logElements(elements, @"sendMsgAndGetMsgIDWithOCContactAndOCMsgElements");
+    return %orig;
 }
 
 %end
