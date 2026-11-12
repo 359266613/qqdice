@@ -5,8 +5,10 @@
     <key>Filter</key>
     <dict>
         <key>Bundles</key>
-        <array><string>com.tencent.mqq</string></array>
-        <array><string>com.tencent.tim</string></array>        
+        <array>
+            <string>com.tencent.mqq</string>
+            <string>com.tencent.tim</string>
+        </array>
     </dict>
 </dict>
 </plist>
