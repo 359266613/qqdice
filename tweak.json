@@ -1,0 +1,21 @@
+{
+  "schema": 2,
+  "name": "QQDice",
+  "id": "qqdice",
+  "display_name": "QQ骰子控点",
+  "class_prefix": "AxsQQDice",
+  "symbol_prefix": "axs_qqdice",
+  "package": "com.axs.qqdice",
+  "bundle": "com.tencent.mqq",
+  "sdk_version": "16.5",
+  "minimum_ios": "14.0",
+  "panel": true,
+  "entries": [],
+  "follow_gate": false,
+  "auth": [],
+  "about": [],
+  "slider": false,
+  "color": false,
+  "github_actions": false,
+  "notes": "panel + picker; dice send interception pending device capture"
+}

@@ -1,0 +1,11 @@
+Package: com.axs.qqdice
+Name: QQ骰子控点
+Version: 5.2.0
+Architecture: iphoneos-arm
+Description: QQ骰子控点
+Maintainer: Axs
+Author: Axs
+Section: Axs-Tweaks
+Depends: mobilesubstrate
+Icon: https://axs66.github.io/pro/icon/qqdice.png
+Sileodepiction: https://axs66.github.io/pro/sileodepiction/qqdice/js.json
