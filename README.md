@@ -1,62 +1,25 @@
-> **当前进度**：悬浮球和选点面板尚需真机验证。点击 QQ 表情图标弹窗选择骰子或猜拳结果、
-> 以及实际发送指定结果，均尚未实现。QQ 9.2.75 的 classdump 中可见
-> `OCFaceElement` 的 `packId`、`stickerId`、`resultId` 和 `randomType`，
-> 但头文件没有说明骰子和猜拳的标识及结果编码，不能仅凭字段名确定发送行为。
-> 现有 JSON 诊断不一定能观察到 QQ 的二进制消息。
+# AxsQQDice
 
-# AxsQQDice（QQ 骰子控点）
+QQ 9.2.75 骰子与猜拳插件，当前处于发送链路诊断阶段。
 
-越狱插件，目标 `com.tencent.mqq`。包名 `com.axs.qqdice`，类前缀 `AxsQQDice`，
-函数前缀 `axs_qqdice_`。
+## 当前状态
 
-## 结构
+- 已停止构建旧悬浮球入口及全局 JSON 改写 Hook；旧源码仍保留，方便对照。
+- 根据 QQ 9.2.75 的 `QQMsgService.h`，监听 `sendAniStickerMsg:faceContent:additionalMsg:callBack:` 和 `sendMarketFaceMsg:marketFaceInfo:additionalMsg:callBack:`。
+- 这两个方法是候选路径，尚未证实普通聊天里的骰子和猜拳会经过它们。
+- Hook 保留 QQ 原发送行为，不修改消息，也不会弹出选择界面。
+- 暂未实现指定点数或猜拳结果。classdump 没有提供具体表情标识、结果编码或方法实现，必须先通过真实设备确认。
 
-```text
-Hooks/
-  AxsQQDiceMain.xm        悬浮球入口（打开面板 / 长按直接选点）
-  AxsQQDiceProtocol.xm    JSON 序列化处改写骰子结果字段 + 诊断日志
-Sources/
-  AxsQQDiceConfig.h/.m    NSUserDefaults 配置（suite com.axs.qqdice）
-  AxsQQDiceDiceResources  骰子图片识别、同目录点数映射、整包扫描
-  AxsQQDiceHost.h/.m      取顶层控制器、呈现面板
-Controllers/
-  AxsQQDicePickerViewController  1-6 点选点弹窗（Core Graphics 画点阵）
-  AxsQQDiceRootViewController    面板：启用、立即选点、悬浮球、强制点数、状态、诊断
-  AxsQQDiceCard* / Setting*      卡片列表样式（来自技能模板）
-Headers/
-  AxsQQDicePrivate.h      私有类型说明，不含写死的 QQ 类名
-  AxsQQDicePickerViewController.h
-```
+## 测试
 
-## 已实现，待真机验证
+使用 Theos 构建、注入 QQ 9.2.75 并完全重启后，在自己的测试会话分别发送骰子、石头剪刀布和普通表情。通过设备日志工具筛选 `AxsQQDice`，记录每次操作对应的日志。启动日志中的 `loaded` 可帮助确认插件已加载，`ani` 和 `market` 表示候选方法是否存在。
 
-- 悬浮球入口不依赖任何 QQ 私有类：设计上可拖动、点一下开面板，长按直接选点。
-- 选点弹窗按 1-6 渲染点阵，写入配置键 `points`。
-- 资源识别：在 App 包内查找 `.../dice/1.png` … `6.png`，面板“资源探测”显示命中档数。
+日志仅包含候选表情对象的类名和表情标识字段，不主动读取联系人、聊天内容或额外消息。但表情字段仍可能包含 QQ 返回的任意字符串；分享日志前请检查并删除敏感信息。
 
-## 待真机验证
+若所有操作均没有对应发送日志，说明尚未验证到调用路径；若连启动日志也没有，请检查注入。若只有普通表情产生日志，需继续定位随机动画表情的发送路径。
 
-1. 确认骰子和猜拳点击时实际经过的发送方法，以及 `packId`、`stickerId` 和 `resultId` 的取值。
-2. 对照发送端和接收端，确认每个结果的编码及修改后是否被服务器接受。
-3. `Hooks/AxsQQDiceProtocol.xm` 仅是未经验证的 JSON 实验，不能证明适配此版本；
-   没有 JSON 日志也不能单独证明消息采用了何种编码。
+拿到骰子和猜拳的字段后，才能分别确认表情识别、结果映射及服务端接收情况，再实现点击表情后选择结果的界面。
 
 ## 构建
 
-```sh
-cd /var/minis/workspace/qqtouzi
-sh build.sh rootless        # 或 rootful / roothide / all
-```
-
-需要可用的 Theos 与 iOS 16.5 SDK；本工作区没有 Theos，未执行编译。
-产物在 `packages/`，`dpkg-deb -I` / `-c` 核对包名、依赖（仅 mobilesubstrate）、
-注入过滤器（com.tencent.mqq）与 dylib。
-
-## 使用
-
-1. 安装并注销，打开 QQ，出现骰子悬浮球。
-2. 点球进面板 → 启用插件 → 立即选点，或长按球直接选。
-3. “强制骰子点数”使用的是未经验证的 JSON 实验，建议保持关闭。
-4. 要关闭悬浮球：面板 → 悬浮球入口 关闭。
-5. 诊断日志：面板 → 诊断 → 记录骰子协议；日志在
-   `Documents/AxsQQDice.log`（App 沙盒，可用 Filza 查看）。
+需要 Theos 和 iOS 16.5 SDK，可通过 `sh build.sh rootless` 构建。Windows 工作区未配置 Theos，构建和真机行为均待验证。
