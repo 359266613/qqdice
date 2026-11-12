@@ -73,9 +73,9 @@ static BOOL axs_qqdice_patchDictionary(NSMutableDictionary *dictionary, NSIntege
     for (NSString *key in dictionary.allKeys.copy) {
         id value = dictionary[key];
         if ([value isKindOfClass:[NSDictionary class]]) {
-            NSMutableDictionary *mutable = [value mutableCopy];
-            if (axs_qqdice_patchDictionary(mutable, points)) {
-                dictionary[key] = mutable;
+            NSMutableDictionary *mutableDictionary = [value mutableCopy];
+            if (axs_qqdice_patchDictionary(mutableDictionary, points)) {
+                dictionary[key] = mutableDictionary;
                 changed = YES;
             }
             continue;
@@ -87,9 +87,9 @@ static BOOL axs_qqdice_patchDictionary(NSMutableDictionary *dictionary, NSIntege
                 if (![items[index] isKindOfClass:[NSDictionary class]]) {
                     continue;
                 }
-                NSMutableDictionary *mutable = [items[index] mutableCopy];
-                if (axs_qqdice_patchDictionary(mutable, points)) {
-                    items[index] = mutable;
+                NSMutableDictionary *mutableDictionary = [items[index] mutableCopy];
+                if (axs_qqdice_patchDictionary(mutableDictionary, points)) {
+                    items[index] = mutableDictionary;
                     arrayChanged = YES;
                 }
             }

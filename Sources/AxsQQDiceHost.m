@@ -1,7 +1,7 @@
 #import "AxsQQDiceHost.h"
 #import <objc/runtime.h>
 
-UIViewController *axs_qqdice_topMostViewController(void) {
+UIWindow *axs_qqdice_keyWindow(void) {
     UIWindow *keyWindow = nil;
     for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
         if (![scene isKindOfClass:[UIWindowScene class]] ||
@@ -25,7 +25,11 @@ UIViewController *axs_qqdice_topMostViewController(void) {
         keyWindow = UIApplication.sharedApplication.keyWindow;
 #pragma clang diagnostic pop
     }
-    UIViewController *top = keyWindow.rootViewController;
+    return keyWindow;
+}
+
+UIViewController *axs_qqdice_topMostViewController(void) {
+    UIViewController *top = axs_qqdice_keyWindow().rootViewController;
     while (top.presentedViewController) {
         top = top.presentedViewController;
     }

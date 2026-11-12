@@ -67,7 +67,7 @@ static NSString * const AxsQQDiceBallYKey = @"ballY";
 }
 
 - (void)axs_qqdice_drag:(UIPanGestureRecognizer *)gesture {
-    UIWindow *window = self.superview;
+    UIWindow *window = self.window;
     if (!window) {
         return;
     }
@@ -130,7 +130,7 @@ static void axs_qqdice_removeBalls(void) {
 static void axs_qqdice_syncBall(void) {
     AxsQQDiceConfig *config = [AxsQQDiceConfig axs_qqdice_shared];
     if ([config axs_qqdice_boolForKey:@"showBall" defaultValue:YES]) {
-        axs_qqdice_installBall(UIApplication.sharedApplication.keyWindow ?: axs_qqdice_topMostViewController().view.window);
+        axs_qqdice_installBall(axs_qqdice_keyWindow());
         return;
     }
     axs_qqdice_removeBalls();
