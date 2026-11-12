@@ -7,6 +7,43 @@
 - (void)sendMarketFaceMsg:(id)contact marketFaceInfo:(id)info additionalMsg:(id)additional callBack:(id)callback;
 @end
 
+static void axs_qqdice_log(NSString *message) {
+    NSLog(@"[AxsQQDice] %@", message);
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.axs.qqdice.diagnostics", DISPATCH_QUEUE_SERIAL);
+    });
+    NSString *line = [NSString stringWithFormat:@"[%@] %@\n", [NSDate date], message];
+    dispatch_async(queue, ^{
+        NSString *documents = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+        if (!documents) {
+            NSLog(@"[AxsQQDice] Documents directory unavailable");
+            return;
+        }
+        NSString *path = [documents stringByAppendingPathComponent:@"AxsQQDice.log"];
+        NSFileManager *manager = [NSFileManager defaultManager];
+        if (![manager fileExistsAtPath:path] &&
+            ![manager createFileAtPath:path contents:nil attributes:nil]) {
+            NSLog(@"[AxsQQDice] Cannot create log at %@", path);
+            return;
+        }
+        NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:path];
+        if (!handle) {
+            NSLog(@"[AxsQQDice] Cannot open log at %@", path);
+            return;
+        }
+        @try {
+            [handle seekToEndOfFile];
+            [handle writeData:[line dataUsingEncoding:NSUTF8StringEncoding]];
+        } @catch (NSException *exception) {
+            NSLog(@"[AxsQQDice] Log write failed: %@", exception.reason);
+        } @finally {
+            [handle closeFile];
+        }
+    });
+}
+
 static id axs_qqdice_readObject(id object, SEL selector) {
     if (!object || ![object respondsToSelector:selector]) {
         return nil;
@@ -20,7 +57,7 @@ static id axs_qqdice_readObject(id object, SEL selector) {
 
 static void axs_qqdice_logSticker(id object, NSString *source) {
     if (!object) {
-        NSLog(@"[AxsQQDice] %@: nil", source);
+        axs_qqdice_log([NSString stringWithFormat:@"%@: nil", source]);
         return;
     }
     NSMutableDictionary *fields = [NSMutableDictionary dictionary];
@@ -31,7 +68,7 @@ static void axs_qqdice_logSticker(id object, NSString *source) {
             fields[name] = value;
         }
     }
-    NSLog(@"[AxsQQDice] %@ class=%@ fields=%@", source, NSStringFromClass([object class]), fields);
+    axs_qqdice_log([NSString stringWithFormat:@"%@ class=%@ fields=%@", source, NSStringFromClass([object class]), fields]);
     id nested = axs_qqdice_readObject(object, @selector(aniStickerInfo));
     if (nested && nested != object) {
         NSMutableDictionary *nestedFields = [NSMutableDictionary dictionary];
@@ -41,7 +78,7 @@ static void axs_qqdice_logSticker(id object, NSString *source) {
                 nestedFields[name] = value;
             }
         }
-        NSLog(@"[AxsQQDice] nested class=%@ fields=%@", NSStringFromClass([nested class]), nestedFields);
+        axs_qqdice_log([NSString stringWithFormat:@"nested class=%@ fields=%@", NSStringFromClass([nested class]), nestedFields]);
     }
 }
 
@@ -62,9 +99,9 @@ static void axs_qqdice_logSticker(id object, NSString *source) {
 %ctor {
     @autoreleasepool {
         Class service = NSClassFromString(@"QQMsgService");
-        NSLog(@"[AxsQQDice] loaded; QQMsgService=%@ ani=%d market=%d",
+        axs_qqdice_log([NSString stringWithFormat:@"loaded; QQMsgService=%@ ani=%d market=%d",
               service ? @"present" : @"missing",
               service && [service instancesRespondToSelector:@selector(sendAniStickerMsg:faceContent:additionalMsg:callBack:)],
-              service && [service instancesRespondToSelector:@selector(sendMarketFaceMsg:marketFaceInfo:additionalMsg:callBack:)]);
+              service && [service instancesRespondToSelector:@selector(sendMarketFaceMsg:marketFaceInfo:additionalMsg:callBack:)]]);
     }
 }
