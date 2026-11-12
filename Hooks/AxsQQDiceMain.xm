@@ -143,16 +143,6 @@ static void axs_qqdice_syncBall(void) {
     axs_qqdice_installBall(self);
 }
 
-- (void)didMoveToWindow {
-    %orig;
-    if (self.window == nil) {
-        // 根窗口自己 didMoveToWindow 时 window 为 nil，这里按 windowLevel 判断。
-        if (self.windowLevel >= UIWindowLevelNormal) {
-            axs_qqdice_installBall(self);
-        }
-    }
-}
-
 %end
 
 %ctor {
@@ -167,5 +157,20 @@ static void axs_qqdice_syncBall(void) {
                                                       usingBlock:^(NSNotification *note) {
             axs_qqdice_syncBall();
         }];
+        [[NSNotificationCenter defaultCenter] addObserverForName:UIWindowDidBecomeKeyNotification
+                                                          object:nil
+                                                           queue:[NSOperationQueue mainQueue]
+                                                      usingBlock:^(NSNotification *note) {
+            axs_qqdice_installBall((UIWindow *)note.object);
+        }];
+        [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidBecomeActiveNotification
+                                                          object:nil
+                                                           queue:[NSOperationQueue mainQueue]
+                                                      usingBlock:^(NSNotification *note) {
+            axs_qqdice_syncBall();
+        }];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            axs_qqdice_syncBall();
+        });
     }
 }

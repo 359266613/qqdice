@@ -129,7 +129,7 @@ static BOOL axs_qqdice_patchDictionary(NSMutableDictionary *dictionary, NSIntege
     }
 
     if (logging) {
-        NSData *snapshot = [NSJSONSerialization dataWithJSONObject:object options:0 error:NULL];
+        NSData *snapshot = %orig(object, 0, NULL);
         if (snapshot) {
             axs_qqdice_appendLog([[NSString alloc] initWithData:snapshot encoding:NSUTF8StringEncoding]);
         }
@@ -144,7 +144,7 @@ static BOOL axs_qqdice_patchDictionary(NSMutableDictionary *dictionary, NSIntege
         return %orig;
     }
     axs_qqdice_appendLog([NSString stringWithFormat:@"patched dice result -> %ld", (long)points]);
-    return [NSJSONSerialization dataWithJSONObject:patched options:options error:error];
+    return %orig(patched, options, error);
 }
 
 %end
